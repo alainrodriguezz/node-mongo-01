@@ -12,7 +12,6 @@ MongoClient.connect('mongodb://localhost:27017',(err,client)=>{
 		let todosDone = _.filter(docs,{completed:true}).length
 		let todosPending = _.filter(docs,{completed:false}).length
 		console.log(`Right now I have a list of ${totalTodos} Todos. ${todosDone} of them are done, so I have ${todosPending} pending`)
-
 		//console.log('Todos',JSON.stringify(docs,undefined,2))
 
 	},(err)=>{
