@@ -116,3 +116,22 @@ describe('POST /todos',()=>{
 			})
 	})
 })
+
+describe('DELETE /todos/:id',()=>{
+
+	it('Should Delete a Todo',(done)=>{
+		let id = dummyTodos[0]._id.toHexString()
+		request(app)
+			.delete(`/todos/${id}`)
+			.expect(200)
+			.end((err,res)=>{
+				if(err) return done(err)
+
+				Todo.find().then((todos)=>{
+					expect(todos.length).toBe(1)
+					done()
+				})
+				.catch((err)=> done(err))
+			})
+	})
+})
