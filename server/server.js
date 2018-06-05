@@ -28,15 +28,4 @@ app.post('/todos',(req,res)=>{
 app.listen(3000,()=> console.log('Listening 3000'))
 
 
-/*
-db.on('open',()=>{
-	console.log('Connected')
-
-	// let newUser = new User({
-	// 	email:'alain@gmail.com',
-	// 	password:123
-	// })
-	// newUser.save().then((res)=> console.log(res))
-})
-db.on('err',(err)=> console.log('Error Connecting',err)
-*/
+module.exports = {app}
