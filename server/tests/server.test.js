@@ -1,3 +1,4 @@
+const {ObjectID} = require('mongodb')
 const expect = require('expect')
 const request = require('supertest')
 
@@ -6,9 +7,11 @@ const {Todo} = require('./../models/todo')
 
 let dummyTodos = [
 {
-	text:'First Test Todo'
+	text:'First Test Todo',
+	_id:new ObjectID()
 },{
-	text:'Second Test Todo'
+	text:'Second Test Todo',
+	_id:new ObjectID()
 }]
 
 
@@ -25,8 +28,8 @@ beforeEach((done)=>{
 })
 
 
-
 describe('GET /todos',()=>{
+	
 	it('Should get all Todos',(done)=>{
 		request(app)
 			.get('/todos')
@@ -38,6 +41,39 @@ describe('GET /todos',()=>{
 	})
 })
 
+describe('GET /todos/:ID',()=>{
+
+	it('Should get a Todo by ID',(done)=>{
+		request(app)
+			.get(`/todos/${dummyTodos[0]._id.toHexString()}`)
+			.expect(200)
+			.expect((res)=>{
+				expect(res.body.todo.text).toBe(dummyTodos[0].text)
+			})
+			.end(done)
+	})
+
+	it('Should get 404 BAD ID Error',(done)=>{
+		request(app)
+			.get('/todos/0000')
+			.expect(404)
+			.expect((res)=>{
+				expect(res.body.error).toBe('Bad ID')
+			})
+			.end(done)
+	})
+
+	it('Should get 404 Not Found',(done)=>{
+		let tempId = new ObjectID().toHexString()
+		request(app)
+			.get(`/todos/${tempId}`)
+			.expect(404)
+			.expect((res)=>{
+				expect(res.body.error).toBe('Todo not found')
+			})
+			.end(done)
+	})
+})
 
 
 describe('POST /todos',()=>{
