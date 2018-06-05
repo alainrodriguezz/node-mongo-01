@@ -8,10 +8,10 @@ const {Todo} = require('./models/todo')
 const {User} = require('./models/user')
 
 const app = express()
-
-
-
 app.use(bodyParser.json())
+
+
+
 
 app.post('/todos',(req,res)=>{
 	console.log(req.body)
@@ -25,7 +25,19 @@ app.post('/todos',(req,res)=>{
 })
 
 
+app.get('/todos',(req,res)=>{
+	console.log(req.body)
+
+	Todo.find().then((todos)=>{
+		res.send({todos})
+	},(err)=> {
+		res.status(400).send(err)
+	})
+})
+
+
 app.listen(3000,()=> console.log('Listening 3000'))
+
 
 
 module.exports = {app}
