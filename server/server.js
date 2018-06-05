@@ -1,64 +1,42 @@
-const mongoose = require('mongoose')
+//requires
+const express = require('express')
+const bodyParser = require('body-parser')
 
-mongoose.Promise = global.Promise
-mongoose.connect('mongodb://localhost:27017/TodoApp')
-const db = mongoose.connection
+//Mongoose & Models
+const {mongoose, db} = 	require('./db/mongoose')
+const {Todo} = require('./models/todo')				
+const {User} = require('./models/user')
+
+const app = express()
 
 
-const Todo = mongoose.model('Todo',{
-	text:{
-		type:String,
-		required:true,
-		minlength:1,
-		trim:true
-	},
-	completed:{
-		type:Boolean,
-		default:false
-	},
-	completedAt:{
-		type:Number,
-		default:null
-	}
-}) 
 
-const User = mongoose.model('User',
-{
-	email:{
-		type:String,
-		required:true,
-		trim:true,
-		minlength:1
-	},
-	password:{
-		type:String,
-		minlength:1,
-		required:true
-	}
+app.use(bodyParser.json())
+
+app.post('/todos',(req,res)=>{
+	console.log(req.body)
+
+	let todo = new Todo({
+		text:req.body.text,
+		completed:req.body.completed
+	})
+	todo.save().then((added)=> res.send(added) ,
+					(err)=> res.status(400).send(err))
 })
 
 
+app.listen(3000,()=> console.log('Listening 3000'))
+
+
+/*
 db.on('open',()=>{
 	console.log('Connected')
 
-	// let newTodo = new Todo({
-	// 	text:'Nuevo Pendiente',
-	// 	completed:false
+	// let newUser = new User({
+	// 	email:'alain@gmail.com',
+	// 	password:123
 	// })
-	// newTodo.save().then((res)=>{
-	// 	console.log('Saved',res)
-	// },
-	// (err)=>console.log(err))
-
-	let newUser = new User({
-		email:'alain@gmail.com',
-		password:123
-	})
-	newUser.save().then((res)=> console.log(res))
-
-	
+	// newUser.save().then((res)=> console.log(res))
 })
-
-db.on('err',(err)=>{
-	console.log('Error',err)
-})
+db.on('err',(err)=> console.log('Error Connecting',err)
+*/
