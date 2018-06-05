@@ -4,9 +4,41 @@ const request = require('supertest')
 const {app} = require('./../server')
 const {Todo} = require('./../models/todo')
 
+let dummyTodos = [
+{
+	text:'First Test Todo'
+},{
+	text:'Second Test Todo'
+}]
+
+
+
+
 beforeEach((done)=>{
-	Todo.remove({}).then(()=> done()).catch((err)=>console.log(err))
+	Todo.remove({}).then(()=>{
+		return Todo.insertMany(dummyTodos)
+	}).then(()=>{
+		done()
+	}).catch((err)=>{
+		console.log(err)
+	})
 })
+
+
+
+describe('GET /todos',()=>{
+	it('Should get all Todos',(done)=>{
+		request(app)
+			.get('/todos')
+			.expect(200)
+			.expect((res)=>{
+				expect(res.body.todos.length).toBe(2)
+			})
+			.end(done)
+	})
+})
+
+
 
 describe('POST /todos',()=>{
 	it('Should create a new Todo',(done)=>{
@@ -22,7 +54,7 @@ describe('POST /todos',()=>{
 				if(err){
 					return done(err)
 				}
-				Todo.find().then((todos)=>{
+				Todo.find({text}).then((todos)=>{
 					expect(todos.length).toBe(1)
 					expect(todos[0].text).toBe(text)
 					done()
@@ -41,7 +73,7 @@ describe('POST /todos',()=>{
 				if(err) return done(err)
 
 				Todo.find().then((todos)=>{
-					expect(todos.length).toBe(0)
+					expect(todos.length).toBe(2)
 					done()
 				})
 				.catch((err)=> done(err))

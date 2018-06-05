@@ -14,19 +14,19 @@ app.use(bodyParser.json())
 
 
 app.post('/todos',(req,res)=>{
-	console.log(req.body)
+	// console.log(req.body)
 
 	let todo = new Todo({
 		text:req.body.text,
 		completed:req.body.completed
-	})
+ 	})
 	todo.save().then((added)=> res.send(added) ,
 					(err)=> res.status(400).send(err))
 })
 
 
 app.get('/todos',(req,res)=>{
-	console.log(req.body)
+	// console.log(req.body)
 
 	Todo.find().then((todos)=>{
 		res.send({todos})
