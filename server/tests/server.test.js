@@ -2,15 +2,18 @@ const {ObjectID} = require('mongodb')
 const expect = require('expect')
 const request = require('supertest')
 
+
 const {app} = require('./../server')
 const {Todo} = require('./../models/todo')
 
 let dummyTodos = [
 {
 	text:'1 First Test Todo',
+	completed:false,
 	_id:new ObjectID()
 },{
 	text:'2 Second Test Todo',
+	completed:false,
 	_id:new ObjectID()
 }]
 
@@ -117,6 +120,41 @@ describe('POST /todos',()=>{
 	})
 })
 
+
+
+describe('PATCH /todos/:id',()=>{
+
+	it('Should PATCH with new text',(done)=>{
+		let id = dummyTodos[0]._id.toHexString()
+		let newText = 'Nuevo Texto'
+		request(app)
+			.patch(`/todos/${id}`)
+			.send({text:newText,completed:true})
+			.expect(200)
+			.expect((res)=>{
+				expect(res.body.todo.text).toBe(newText)
+				expect(res.body.todo.completed).toBe(true)
+			})
+			.end(done)
+
+	})
+	
+	it('Should remove completedAt when its completed false',(done)=>{
+		let id = dummyTodos[0]._id.toHexString()
+		request(app)
+			.patch(`/todos/${id}`)
+			.send({completed:false})
+			.expect(200)
+			.expect((res)=>{
+				expect(res.body.todo.completedAt).toBeNull()
+			})
+			.end(done)
+	})
+	
+})
+
+
+
 describe('DELETE /todos/:id',()=>{
 
 	it('Should Delete a Todo',(done)=>{
@@ -152,6 +190,5 @@ describe('DELETE /todos/:id',()=>{
 			.expect(404)
 			.end(done)
 	})
-
 
 })
