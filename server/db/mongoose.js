@@ -4,7 +4,7 @@ const db = mongoose.connection
 //HEROKU MONGO URI: 	mongolab-dimensional-93436
 
 mongoose.Promise = global.Promise
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/TodoApp')
+mongoose.connect(process.env.MONGODB_URI)
 
 db.on('open',()=>{
 	console.log('Mongo Connected')

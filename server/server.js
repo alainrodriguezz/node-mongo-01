@@ -1,3 +1,5 @@
+require('./config/config')
+
 //requires
 const _ = require('lodash')
 const express = require('express')
@@ -10,10 +12,13 @@ const {Todo} = require('./models/todo')
 const {User} = require('./models/user')
 
 const app = express()
-const port = process.env.PORT || 3000
+const port = process.env.PORT
 app.use(bodyParser.json())
 
 
+//=====================
+//TODOS
+//=====================
 
 app.get('/todos',(req,res)=>{
 	// console.log(req.body)
@@ -83,6 +88,69 @@ app.delete('/todos/:id',(req,res)=>{
 		res.send({deleted:todo})
 	}).catch((err)=>res.status(400).send(err))
 })
+
+
+//=====================
+//USERS
+//=====================
+
+app.get('/users',(req,res)=>{
+	User.find().then((users)=>{
+		res.send({users})
+	})
+	.catch((err)=>res.status(400).send(err))
+})
+
+app.get('/users/:id',(req,res)=>{
+
+	if(!ObjectID.isValid(req.params.id)) return res.status(404).send()
+
+	User.findById(req.params.id).then((user)=>{
+		if(!user) return res.status(404).send()
+		res.send({user})
+	})
+	.catch((err)=>res.status(400).send(err))
+})
+
+
+app.post('/users',(req,res)=>{
+	if(!req.body.email || !req.body.password) return res.status(400).send({error:'Email and Password required'})
+	let body = _.pick(req.body,['email','password'])
+	let user = new User(body)
+
+	user.save().then(()=>{
+		return user.generateAuthToken()
+	}).then((token)=>{
+		res.header('x-auth',token).send({user})
+	})	
+	.catch((err)=>res.status(400).send(err))
+})
+
+app.patch('/users/:id',(req,res)=>{
+	if(!ObjectID.isValid(req.params.id)) return res.status(404).send()
+
+	let id = req.params.id
+	let body = _.pick(req.body,['email','password'])
+
+	User.findByIdAndUpdate(id,{ $set:body},{new:true}).then((user)=>{
+		if(!user) return res.status(404).send()
+		res.send({user})
+	})
+	.catch((err)=>res.status(400).send())
+})
+
+
+app.delete('/users/:id',(req,res)=>{
+	if(!ObjectID.isValid(req.params.id)) return res.status(404).send()
+
+	User.findByIdAndDelete(req.params.id).then((user)=>{
+		if(!user) return res.status(404).send()
+		res.send({user})
+	}).catch((err)=> res.status(400).send(err))
+})
+
+
+
 
 
 app.listen(port,()=> console.log('Listening at',port))
