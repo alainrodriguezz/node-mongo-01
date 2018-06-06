@@ -7,10 +7,10 @@ const {Todo} = require('./../models/todo')
 
 let dummyTodos = [
 {
-	text:'First Test Todo',
+	text:'1 First Test Todo',
 	_id:new ObjectID()
 },{
-	text:'Second Test Todo',
+	text:'2 Second Test Todo',
 	_id:new ObjectID()
 }]
 
@@ -124,14 +124,34 @@ describe('DELETE /todos/:id',()=>{
 		request(app)
 			.delete(`/todos/${id}`)
 			.expect(200)
+			.expect((res)=>{
+				expect(res.body.deleted._id).toBe(id)
+			})
 			.end((err,res)=>{
 				if(err) return done(err)
 
-				Todo.find().then((todos)=>{
-					expect(todos.length).toBe(1)
+				Todo.findById(id).then((todo)=>{
+					expect(todo).toBeNull()
 					done()
-				})
-				.catch((err)=> done(err))
+				}).catch((err)=>done(err))
 			})
+
 	})
+
+	it('Should return 404 for Todo Not found',(done)=>{
+		let newid = new ObjectID().toHexString()
+		request(app)
+			.delete(`/todos/${newid}`)
+			.expect(404)
+			.end(done)
+	})
+
+	it('Should return 4040 for Bad ID',(done)=>{
+		request(app)
+			.delete(`/todos/123abc`)
+			.expect(404)
+			.end(done)
+	})
+
+
 })
