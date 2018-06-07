@@ -2,33 +2,14 @@ const {ObjectID} = require('mongodb')
 const expect = require('expect')
 const request = require('supertest')
 
-
 const {app} = require('./../server')
 const {Todo} = require('./../models/todo')
+const {User} = require('./../models/user')
 
-let dummyTodos = [
-{
-	text:'1 First Test Todo',
-	completed:false,
-	_id:new ObjectID()
-},{
-	text:'2 Second Test Todo',
-	completed:false,
-	_id:new ObjectID()
-}]
+const {dummyTodos,populateTodos,dummyUsers,populateUsers} = require('./seed/seed')
 
-
-
-
-beforeEach((done)=>{
-	Todo.remove({}).then(()=>{
-		return Todo.insertMany(dummyTodos)
-	}).then(()=>{
-		done()
-	}).catch((err)=>{
-		console.log(err)
-	})
-})
+beforeEach(populateUsers)
+beforeEach(populateTodos)
 
 
 describe('GET /todos',()=>{
@@ -190,5 +171,82 @@ describe('DELETE /todos/:id',()=>{
 			.expect(404)
 			.end(done)
 	})
+})
 
+
+describe('GET /users/me',()=>{
+
+	it('Should return user if authenticated',(done)=>{
+		request(app)
+			.get('/users/me')
+			.set('x-auth',dummyUsers[0].tokens[0].token)
+			.expect(200)
+			.expect((res)=>{
+				expect(res.body._id).toBe(dummyUsers[0]._id.toHexString())
+				expect(res.body.email).toBe(dummyUsers[0].email)
+			})
+			.end(done)
+	})
+
+	it('Should return 401 because not authenticated',(done)=>{
+		request(app)
+			.get('/users/me')
+			.expect(401)
+			.expect((res)=>{
+				expect(res.body).toEqual({})
+			})
+			.end(done)
+	})
+})
+
+
+describe('POST /users/',()=>{
+	it('Should create a user',(done)=>{
+		let email = 'example@example.com'
+		let password = '123qwe'
+
+		request(app)
+			.post('/users')
+			.send({email,password})
+			.expect(200)
+			.expect((res)=>{
+				expect(res.headers['x-auth']).toBeDefined()
+				expect(res.body.user._id).toBeDefined()
+				expect(res.body.user.email).toBe(email)
+			})
+			.end((err)=>{
+				if(err) return done(err)
+
+				User.findOne({email}).then((user)=>{
+					console.log(user)
+					expect(user).toBeDefined() 
+					expect(user.password).not.toBe(password)
+					done()
+				})
+			})
+	})
+
+	it('Should retur error because of bad Email',(done)=>{
+		
+		let email = 'Notemail'
+		let password = '123qwe'
+		
+		request(app)
+			.post('/users')
+			.send({email,password})
+			.expect(400)
+			.end(done)
+	})
+
+	it('Should not create user if email is in use',(done)=>{
+		
+		let email = dummyUsers[0].email
+		let password = '123qwe'
+
+		request(app)
+			.post('/users')
+			.send({email,password})
+			.expect(400)
+			.end(done)
+	})
 })
