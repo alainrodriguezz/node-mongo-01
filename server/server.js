@@ -22,7 +22,6 @@ app.use(bodyParser.json())
 //=====================
 
 app.get('/todos',(req,res)=>{
-	// console.log(req.body)
 
 	Todo.find().then((todos)=>{
 		res.send({todos})
@@ -44,7 +43,6 @@ app.get('/todos/:id',(req,res)=>{
 
 
 app.post('/todos',(req,res)=>{
-	// console.log(req.body)
 
 	let todo = new Todo({
 		text:req.body.text,
@@ -102,6 +100,7 @@ app.post('/users/login',(req,res)=>{
 		user.generateAuthToken().then((token)=>{
 			res.header('x-auth',token).send(user)
 		})
+		.catch((err)=> res.status(400).send())	
 	})
 	.catch((err)=> res.status(400).send())
 })
@@ -138,10 +137,8 @@ app.post('/users',(req,res)=>{
 	let user = new User(body)
 
 	user.save().then(()=>{
-		console.log('1')
 		return user.generateAuthToken()
 	}).then((token)=>{
-		console.log('2')
 		res.header('x-auth',token).send({user})
 	})	
 	.catch((err)=>res.status(400).send())
@@ -171,6 +168,13 @@ app.delete('/users/:id',(req,res)=>{
 })
 
 
+app.delete('/users/me/token',authenticate,(req,res)=>{
+	req.user.removeToken(req.token).then(()=>{
+		res.status(200).send()
+	},()=>{
+		res.status(400).send()
+	})
+})
 
 
 

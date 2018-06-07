@@ -218,11 +218,11 @@ describe('POST /users/',()=>{
 				if(err) return done(err)
 
 				User.findOne({email}).then((user)=>{
-					console.log(user)
 					expect(user).toBeDefined() 
 					expect(user.password).not.toBe(password)
 					done()
 				})
+				.catch((err)=>done(err))
 			})
 	})
 
@@ -249,4 +249,47 @@ describe('POST /users/',()=>{
 			.expect(400)
 			.end(done)
 	})
+})
+
+
+describe('LOGIN /users/login',()=>{
+
+	
+	it('Should login, good credentials',(done)=>{
+
+		let email = dummyUsers[1].email
+		let password = dummyUsers[1].password
+
+		request(app)
+			.post('/users/login')
+			.send({email,password})
+			.expect(200)
+			.expect((res)=>{
+				expect(res.headers['x-auth']).toBeDefined()
+			})
+			.end((err,res)=>{
+				if(err) return done(err)
+
+				User.findById(dummyUsers[1]._id).then((user)=>{
+					expect(user.tokens[0].access).toBeDefined()
+					expect(user.tokens[0].token).toBeDefined()
+					done()
+				})
+				.catch((err)=>done(err))
+
+			})
+	})
+
+
+		it('Should not login because wrong password',(done)=>{
+			let email = dummyUsers[1].email
+			let password = 'bad'
+
+			request(app)
+				.post('/users/login')
+				.send({email,password})
+				.expect(400)
+				.end(done)
+		})
+
 })
