@@ -19,6 +19,10 @@ const dummyUsers = [
 	_id:userTwoId,
 	email:'user2prueba@gmail.com',
 	password:'userTwopass',
+	tokens:[{
+		access:'auth',
+		token:jwt.sign({_id:userTwoId,access:'auth'},'abc123').toString()
+	}]
 }]
 
 
@@ -26,11 +30,13 @@ let dummyTodos = [
 {
 	text:'1 First Test Todo',
 	completed:false,
-	_id:new ObjectID()
+	_id:new ObjectID(),
+	_creator:userOneId
 },{
 	text:'2 Second Test Todo',
 	completed:false,
-	_id:new ObjectID()
+	_id:new ObjectID(),
+	_creator:userTwoId
 }]
 
 

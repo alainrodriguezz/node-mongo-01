@@ -17,9 +17,10 @@ describe('GET /todos',()=>{
 	it('Should get all Todos',(done)=>{
 		request(app)
 			.get('/todos')
+			.set('x-auth',dummyUsers[0].tokens[0].token)
 			.expect(200)
 			.expect((res)=>{
-				expect(res.body.todos.length).toBe(2)
+				expect(res.body.todos.length).toBe(1)
 			})
 			.end(done)
 	})
@@ -27,9 +28,10 @@ describe('GET /todos',()=>{
 
 describe('GET /todos/:ID',()=>{
 
-	it('Should get a Todo by ID',(done)=>{
+	it('Should get a Todo by ID and created by this User',(done)=>{
 		request(app)
 			.get(`/todos/${dummyTodos[0]._id.toHexString()}`)
+			.set('x-auth',dummyUsers[0].tokens[0].token)
 			.expect(200)
 			.expect((res)=>{
 				expect(res.body.todo.text).toBe(dummyTodos[0].text)
@@ -37,9 +39,18 @@ describe('GET /todos/:ID',()=>{
 			.end(done)
 	})
 
+	it('Should not get a Todo because it was created by other User',(done)=>{
+		request(app)
+			.get(`/todos/${dummyTodos[1]._id.toHexString()}`)
+			.set('x-auth',dummyUsers[0].tokens[0].token)
+			.expect(404)
+				.end(done)
+	})
+
 	it('Should get 404 BAD ID Error',(done)=>{
 		request(app)
 			.get('/todos/0000')
+			.set('x-auth',dummyUsers[0].tokens[0].token)
 			.expect(404)
 			.expect((res)=>{
 				expect(res.body.error).toBe('Bad ID')
@@ -51,6 +62,7 @@ describe('GET /todos/:ID',()=>{
 		let tempId = new ObjectID().toHexString()
 		request(app)
 			.get(`/todos/${tempId}`)
+			.set('x-auth',dummyUsers[0].tokens[0].token)
 			.expect(404)
 			.expect((res)=>{
 				expect(res.body.error).toBe('Todo not found')
@@ -65,6 +77,7 @@ describe('POST /todos',()=>{
 		let text = "Test todo text"
 		request(app)
 			.post('/todos')
+			.set('x-auth',dummyUsers[0].tokens[0].token)
 			.send({text})
 			.expect(200)
 			.expect((res)=>{
@@ -87,6 +100,7 @@ describe('POST /todos',()=>{
 	it('Souldnt create a new Todo and get 400 error because of no-data Sent',(done)=>{
 		request(app)
 			.post('/todos')
+			.set('x-auth',dummyUsers[0].tokens[0].token)
 			.send({})
 			.expect(400)
 			.end((err,res)=>{
@@ -105,11 +119,12 @@ describe('POST /todos',()=>{
 
 describe('PATCH /todos/:id',()=>{
 
-	it('Should PATCH with new text',(done)=>{
+	it('Should PATCH a Todo with new text',(done)=>{
 		let id = dummyTodos[0]._id.toHexString()
 		let newText = 'Nuevo Texto'
 		request(app)
 			.patch(`/todos/${id}`)
+			.set('x-auth',dummyUsers[0].tokens[0].token)
 			.send({text:newText,completed:true})
 			.expect(200)
 			.expect((res)=>{
@@ -124,12 +139,26 @@ describe('PATCH /todos/:id',()=>{
 		let id = dummyTodos[0]._id.toHexString()
 		request(app)
 			.patch(`/todos/${id}`)
+			.set('x-auth',dummyUsers[0].tokens[0].token)
 			.send({completed:false})
 			.expect(200)
 			.expect((res)=>{
 				expect(res.body.todo.completedAt).toBeNull()
 			})
 			.end(done)
+	})
+
+
+	it('Should Not PATCH a Todo from Another User',(done)=>{
+		let id = dummyTodos[0]._id.toHexString()
+		let newText = 'Nuevo Texto'
+		request(app)
+			.patch(`/todos/${id}`)
+			.set('x-auth',dummyUsers[1].tokens[0].token)
+			.send({text:newText,completed:true})
+			.expect(404)
+			.end(done)
+
 	})
 	
 })
@@ -138,10 +167,12 @@ describe('PATCH /todos/:id',()=>{
 
 describe('DELETE /todos/:id',()=>{
 
-	it('Should Delete a Todo',(done)=>{
+	it('Should Delete one of my Todos',(done)=>{
 		let id = dummyTodos[0]._id.toHexString()
+		console.log("deleting",id)
 		request(app)
 			.delete(`/todos/${id}`)
+			.set('x-auth',dummyUsers[0].tokens[0].token)
 			.expect(200)
 			.expect((res)=>{
 				expect(res.body.deleted._id).toBe(id)
@@ -157,10 +188,28 @@ describe('DELETE /todos/:id',()=>{
 
 	})
 
+	it('Fail Deleting a Todo from other user',(done)=>{
+		let id = dummyTodos[0]._id.toHexString()
+		request(app)
+			.delete(`/todos/${id}`)
+			.set('x-auth',dummyUsers[1].tokens[0].token)
+			.expect(404)
+			.end((err,res)=>{
+				if(err) return done(err)
+
+				Todo.findById(id).then((todo)=>{
+					expect(todo._id.toHexString()).toBe(id)
+					done()
+				}).catch((err)=>done(err))
+			})
+
+	})
+
 	it('Should return 404 for Todo Not found',(done)=>{
 		let newid = new ObjectID().toHexString()
 		request(app)
 			.delete(`/todos/${newid}`)
+			.set('x-auth',dummyUsers[1].tokens[0].token)
 			.expect(404)
 			.end(done)
 	})
@@ -168,6 +217,7 @@ describe('DELETE /todos/:id',()=>{
 	it('Should return 4040 for Bad ID',(done)=>{
 		request(app)
 			.delete(`/todos/123abc`)
+			.set('x-auth',dummyUsers[1].tokens[0].token)
 			.expect(404)
 			.end(done)
 	})
@@ -252,7 +302,7 @@ describe('POST /users/',()=>{
 })
 
 
-describe('LOGIN /users/login',()=>{
+describe('POST /users/login',()=>{
 
 	
 	it('Should login, good credentials',(done)=>{
