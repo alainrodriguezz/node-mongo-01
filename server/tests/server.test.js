@@ -216,7 +216,7 @@ describe('DELETE /todos/:id',()=>{
 
 	it('Should return 4040 for Bad ID',(done)=>{
 		request(app)
-			.delete(`/todos/123abc`)
+			.delete(`/todos/${process.env.JWT_SECRET}`)
 			.set('x-auth',dummyUsers[1].tokens[0].token)
 			.expect(404)
 			.end(done)
